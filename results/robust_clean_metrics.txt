@@ -1,0 +1,6 @@
+Degradation-aware training — clean test set
+Accuracy : 0.8523
+Precision: 0.8554
+Recall   : 0.9900
+F1 Score : 0.9178
+ROC-AUC  : 0.8575

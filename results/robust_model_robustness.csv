@@ -1,0 +1,13 @@
+condition,severity,f1,roc_auc
+clean,0.0,0.0,
+jpeg,90.0,0.0,
+jpeg,70.0,0.0,
+jpeg,50.0,0.0,
+jpeg,30.0,0.0,
+resize,0.75,0.0,
+resize,0.5,0.0,
+resize,0.25,0.0,
+blur,1.0,0.0,
+blur,2.0,0.0,
+blur,3.0,0.0,
+blur,4.0,0.0,

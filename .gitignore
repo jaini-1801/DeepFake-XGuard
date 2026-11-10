@@ -1,0 +1,41 @@
+
+# Python
+__pycache__/
+*.py[cod]
+*.log
+.ipynb_checkpoints/
+.venv/
+venv/
+env/
+
+# Datasets and extracted data
+Data/raw/
+Data/frames/
+Data/faces/
+data/raw/
+data/frames/
+data/faces/
+
+# Model checkpoints and weights
+*.pth
+*.pt
+*.ckpt
+*.onnx
+
+# Large generated files
+*.mp4
+*.avi
+*.mov
+
+# System files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Temporary files
+*.tmp

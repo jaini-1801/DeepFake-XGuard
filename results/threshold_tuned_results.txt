@@ -1,0 +1,12 @@
+Checkpoint: E:\DeepFakeX\best_efficientnet_b0.pth
+Threshold: 0.8399999999999996
+Validation balanced accuracy: 0.6896842346028036
+Test accuracy: 0.7158333333333333
+Test precision: 0.9788249948100477
+Test recall: 0.6735714285714286
+Test F1: 0.798002877210798
+Test ROC-AUC: 0.9006694387755103
+Test balanced accuracy: 0.8003571428571429
+Confusion matrix:
+[[1298  102]
+ [2285 4715]]
