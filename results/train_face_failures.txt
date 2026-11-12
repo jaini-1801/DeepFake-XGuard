@@ -1,0 +1,8 @@
+E:\DeepFakeX\data\frames\train\Deepfakes\365_307\frame_00.jpg
+E:\DeepFakeX\data\frames\train\Deepfakes\365_307\frame_05.jpg
+E:\DeepFakeX\data\frames\train\Deepfakes\365_307\frame_09.jpg
+E:\DeepFakeX\data\frames\train\Deepfakes\547_574\frame_02.jpg
+E:\DeepFakeX\data\frames\train\Deepfakes\569_921\frame_02.jpg
+E:\DeepFakeX\data\frames\train\Deepfakes\704_723\frame_08.jpg
+E:\DeepFakeX\data\frames\train\Face2Face\509_525\frame_02.jpg
+E:\DeepFakeX\data\frames\train\NeuralTextures\509_525\frame_02.jpg
