@@ -1,3 +1,21 @@
+"""
+train_evaluate.py
+-----------------
+Evaluates the CLASS-WEIGHTED model (from train_weighted.py) on the FF++ test set
+and saves all predictions to a .npz file for further analysis.
+
+What is different from evaluate.py?
+  - Loads the WEIGHTED checkpoint (best_efficientnet_b0_weighted.pth)
+  - Also computes balanced accuracy (better metric for imbalanced datasets)
+  - Saves labels + predictions + probabilities + confusion matrix to
+    weighted_test_results.npz -- this file is used by ffpp_roc_analysis.py
+    to generate ROC and PR curves
+
+Output:
+  weighted_test_results.npz  -- raw prediction data for plotting
+  Printed metrics in the terminal
+"""
+
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader, Dataset
@@ -15,18 +33,18 @@ from sklearn.metrics import (
     confusion_matrix
 )
 
-# CONFIG
-ROOT = Path(r"E:\DeepFakeX")
-DATA_DIR = ROOT / "data" / "faces"
-CHECKPOINT = ROOT / "best_efficientnet_b0_weighted.pth"
+# ---- CONFIG ----
+ROOT       = Path(r"E:\DeepFakeX")
+DATA_DIR   = ROOT / "data" / "faces"
+CHECKPOINT = ROOT / "best_efficientnet_b0_weighted.pth"  # Weighted model
 
 BATCH_SIZE = 8
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+DEVICE     = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 print("Device:", DEVICE)
 
-
-# TRANSFORMS
+# ---- IMAGE TRANSFORMS ----
+# Same as training: resize to 160x160 and normalize with ImageNet stats
 weights = EfficientNet_B0_Weights.DEFAULT
 
 test_transform = transforms.Compose([
@@ -39,13 +57,20 @@ test_transform = transforms.Compose([
 ])
 
 
-# DATASET
+# ---- DATASET ----
 class BinaryFaceDataset(Dataset):
+    """
+    Loads face images from folder structure:
+        root/
+          original/   -> Real (label = 0)
+          Deepfakes/  -> Fake (label = 1)
+          ...
+    """
 
     def __init__(self, root, transform=None):
-        self.root = Path(root)
+        self.root      = Path(root)
         self.transform = transform
-        self.samples = []
+        self.samples   = []
 
         for class_dir in self.root.iterdir():
             if not class_dir.is_dir():
@@ -70,7 +95,7 @@ class BinaryFaceDataset(Dataset):
         return image, label
 
 
-# TEST DATA
+# ---- LOAD TEST DATA ----
 test_dataset = BinaryFaceDataset(
     DATA_DIR / "test",
     transform=test_transform
@@ -79,35 +104,35 @@ test_dataset = BinaryFaceDataset(
 test_loader = DataLoader(
     test_dataset,
     batch_size=BATCH_SIZE,
-    shuffle=False,
+    shuffle=False,     # Keep order consistent for saving predictions
     num_workers=0
 )
 
 print("Test images:", len(test_dataset))
 
-
-# LOAD MODEL
+# ---- LOAD MODEL ----
 model = models.efficientnet_b0(weights=None)
 
+# Replace final classifier layer: 1280 features -> 2 classes (Real/Fake)
 model.classifier[1] = nn.Linear(
     model.classifier[1].in_features,
     2
 )
 
+# Load the saved weighted model weights
 model.load_state_dict(
     torch.load(CHECKPOINT, map_location=DEVICE)
 )
 
 model = model.to(DEVICE)
-model.eval()
+model.eval()   # Evaluation mode: no dropout updates
 
 print("Weighted checkpoint loaded successfully!")
 
-
-# EVALUATION
-all_labels = []
-all_preds = []
-all_probs = []
+# ---- RUN INFERENCE ----
+all_labels = []   # Ground truth labels
+all_preds  = []   # Predicted class (0 or 1)
+all_probs  = []   # Predicted probability of being Fake
 
 with torch.no_grad():
 
@@ -117,23 +142,26 @@ with torch.no_grad():
 
         outputs = model(images)
 
+        # Softmax converts raw logits to probabilities that sum to 1
         probabilities = torch.softmax(outputs, dim=1)
 
+        # Predicted class = index of highest probability
         predictions = torch.argmax(probabilities, dim=1)
 
         all_labels.extend(labels.numpy())
         all_preds.extend(predictions.cpu().numpy())
-        all_probs.extend(probabilities[:, 1].cpu().numpy())
+        all_probs.extend(probabilities[:, 1].cpu().numpy())  # Fake probability
 
 
-# METRICS
-accuracy = accuracy_score(all_labels, all_preds)
-precision = precision_score(all_labels, all_preds, zero_division=0)
-recall = recall_score(all_labels, all_preds, zero_division=0)
-f1 = f1_score(all_labels, all_preds, zero_division=0)
-auc = roc_auc_score(all_labels, all_probs)
+# ---- COMPUTE METRICS ----
+accuracy     = accuracy_score(all_labels, all_preds)
+precision    = precision_score(all_labels, all_preds, zero_division=0)
+recall       = recall_score(all_labels, all_preds, zero_division=0)
+f1           = f1_score(all_labels, all_preds, zero_division=0)
+auc          = roc_auc_score(all_labels, all_probs)
 balanced_acc = balanced_accuracy_score(all_labels, all_preds)
 
+# Confusion matrix: shows TN, FP, FN, TP counts
 cm = confusion_matrix(all_labels, all_preds, labels=[0, 1])
 
 print("\n===== TEST CONFUSION MATRIX =====")
@@ -148,15 +176,16 @@ print(f"ROC-AUC               : {auc:.4f}")
 print(f"Test Balanced Accuracy: {balanced_acc:.4f}")
 
 
-# SAVE RESULTS
+# ---- SAVE PREDICTIONS ----
+# Save all raw data to .npz so ffpp_roc_analysis.py can load it for plots
 import numpy as np
 
 np.savez(
     ROOT / "weighted_test_results.npz",
-    labels=np.array(all_labels),
-    predictions=np.array(all_preds),
-    probabilities=np.array(all_probs),
-    confusion_matrix=cm
+    labels=np.array(all_labels),               # True labels
+    predictions=np.array(all_preds),           # Predicted classes
+    probabilities=np.array(all_probs),         # Fake probabilities
+    confusion_matrix=cm                        # Confusion matrix
 )
 
 print("\nResults saved to weighted_test_results.npz")
