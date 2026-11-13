@@ -1,239 +1,263 @@
-# DeepFake XGuard 
+# DeepFake XGuard
 
-**An EfficientNet-B0-based deepfake detection system with cross-dataset evaluation and robustness analysis.**
+**EfficientNet-B0-based deepfake detection with cross-dataset evaluation, robustness analysis, and forensic visualisation.**
 
-## 📌 Overview
+---
 
-DeepFake XGuard is a deepfake detection project that uses deep learning and computer vision to classify facial images as **Real** or **Fake**.
+## Overview
 
-The system uses EfficientNet-B0 as its backbone and is trained on the FaceForensics++ dataset. Its generalisation ability is further evaluated using Celeb-DF v2.
+DeepFake XGuard detects synthetic face manipulations using a fine-tuned EfficientNet-B0 backbone. The model is trained on FaceForensics++ and evaluated both in-domain and zero-shot on Celeb-DF v2 to measure real-world generalisation. Robustness under JPEG compression, resizing, and Gaussian blur is characterised, and forensic views (ELA mean maps and PCA of deep features) are provided for interpretability.
 
-Beyond classification, the project investigates how image degradation affects detection performance through JPEG compression, image resizing and Gaussian blur. It also includes supporting visual analyses using Error Level Analysis (ELA) and Principal Component Analysis (PCA).
+---
 
-##  Objectives
+## Objectives
 
-- Develop a deep learning-based real/fake face classification system.
-- Train and evaluate EfficientNet-B0 on FaceForensics++.
-- Test cross-dataset generalisation using Celeb-DF v2.
-- Analyse robustness under different image degradation conditions.
-- Explore image-level and feature-level patterns using ELA and PCA.
+- Train and evaluate EfficientNet-B0 on FaceForensics++ for binary real/fake classification.
+- Test zero-shot cross-dataset generalisation on Celeb-DF v2.
+- Characterise robustness under common image degradations.
+- Provide interpretability via Error Level Analysis (ELA) and PCA of learned features.
 
-##  Datasets
+---
 
-### 1. FaceForensics++
+## Datasets
 
-Used for model training, validation and in-dataset testing.
+| Dataset | Role | Size |
+|---|---|---|
+| FaceForensics++ | Train / Val / Test | 10,263 face crops (original split); 13,261 in mixed training |
+| Celeb-DF v2 | External zero-shot test | 518 videos (340 fake, 178 real) |
 
-The dataset includes:
-- Original
-- Deepfakes
-- Face2Face
-- FaceShifter
-- FaceSwap
-- NeuralTextures
-
-### 2. Celeb-DF v2
-
-Used for external evaluation to examine how well the trained model performs on an unseen dataset.
-
-**Note:** The model is evaluated on Celeb-DF v2 without additional fine-tuning.
-
-Dataset access:
+**Sources:**
 - [FaceForensics++](https://github.com/ondyari/FaceForensics)
-- [Celeb-DF](https://github.com/yuezunli/celeb-deepfakeforensics)
+- [Celeb-DF v2](https://github.com/yuezunli/celeb-deepfakeforensics)
 
-Please follow the respective dataset licences and access requirements.
+Please follow each dataset's licence and access requirements.
 
-##  Methodology
+---
 
-The project follows this pipeline:
+## Methodology
 
-1. **Dataset preparation:** Organising video data and creating dataset manifests.
-2. **Frame extraction:** Sampling frames from source videos.
-3. **Face extraction:** Using MTCNN to detect and crop facial regions.
-4. **Preprocessing:** Resizing face images to 160 × 160 pixels and normalising inputs.
-5. **Model training:** Fine-tuning EfficientNet-B0 for binary classification.
-6. **Evaluation:** Measuring classification performance using standard metrics.
-7. **Robustness testing:** Evaluating performance under JPEG compression, resizing and Gaussian blur.
-8. **External evaluation:** Testing on Celeb-DF v2.
-9. **Additional analysis:** Exploring ELA and PCA visualisations.
+### Data Pipeline
 
-##  Model Architecture
+```
+FF++ Videos ──► Frame Extraction (1 fps) ──► MTCNN Face Detection ──► Crop & Resize 160×160
+                                                                             │
+Celeb-DF v2 ──► Frame Extraction (1 fps) ──► MTCNN Face Detection ──► Crop & Resize 160×160
+                                                                             │
+                                                                    Augment + Normalise
+                                                                             │
+                                                                   EfficientNet-B0 Fine-tuning
+                                                                     /        |         \
+                                                               Eval FF++  Eval Celeb-DF  Robustness Test
+```
 
-**EfficientNet-B0**
+### Model Architecture
 
-- Pretrained ImageNet weights
-- Modified final classification layer
-- Two output classes: Real (0) and Fake (1)
-- Input resolution: 160 × 160 pixels
-- Optimiser: AdamW
-- Learning rate: 0.0001
-- Batch size: 8
-- Training epochs: 10
+EfficientNet-B0 uses compound scaling (width × depth × resolution) across 7 MBConv blocks with Squeeze-and-Excitation attention. The 1280-dim feature vector from the global average pool feeds a binary classifier.
 
-A class-weighted training version was also explored to account for class imbalance.
+| Component | Detail |
+|---|---|
+| Backbone | EfficientNet-B0, ImageNet pre-trained |
+| Input | 160 × 160 RGB face crops |
+| Blocks | 7 × MBConv (ch 16 → 320) with SE attention and identity skip connections |
+| Head | AvgPool → FC(1280) → FC(2) |
+| Parameters | 5.3M |
 
-##  Results
+### Training Configuration
 
-### FaceForensics++ evaluation
+| Hyper-parameter | Value |
+|---|---|
+| Optimiser | AdamW |
+| Learning rate | 1 × 10⁻⁴ |
+| Weight decay | 1 × 10⁻⁴ |
+| Loss | Cross-Entropy with class weights (fake 0.774 / real 1.412) |
+| Epochs | 10 |
+| Batch size | 8 |
+| Input size | 160 × 160 |
+| Augmentation | Random horizontal flip, colour jitter, Gaussian blur, random erasing |
 
-| Metric | Score |
-|---|---:|
-| Accuracy | 88.20% |
-| Precision | 99.97% |
-| Recall | 85.87% |
-| F1-score | 92.38% |
-| ROC-AUC | 99.52% |
-| Average Precision | 99.85% |
-| Balanced Accuracy | 92.86% |
+---
 
-### Celeb-DF v2 external evaluation
+## Results
 
-| Metric | Score |
-|---|---:|
-| Accuracy | 70.27% |
-| Precision | 77.68% |
-| Recall | 76.76% |
-| F1-score | 77.22% |
-| ROC-AUC | 74.44% |
-| Balanced Accuracy | 67.31% |
+### FaceForensics++ (in-domain)
 
-The difference between FaceForensics++ and Celeb-DF v2 performance highlights the challenge of cross-dataset generalisation.
+| Metric | threshold = 0.50 | threshold = 0.84 |
+|---|---:|---:|
+| Accuracy | 87.75% | 71.58% |
+| Precision | 88.53% | **97.88%** |
+| Recall | **98.00%** | 67.36% |
+| F1-score | 93.02% | 79.80% |
+| Balanced Accuracy | 67.25% | **80.04%** |
+| **ROC-AUC** | **90.07%** | 90.07% |
 
-##  Robustness Analysis
+Confusion matrix at thr = 0.50 (n = 8,400):
 
-The model was evaluated under three image degradation conditions:
+|  | Pred Real | Pred Fake |
+|---|---:|---:|
+| **True Real** | TN = 511 | FP = 889 |
+| **True Fake** | FN = 140 | TP = 6,860 |
 
-- **JPEG compression:** Tests sensitivity to compression quality.
-- **Image resizing:** Tests the effect of reduced image resolution.
-- **Gaussian blur:** Tests sensitivity to loss of image details.
+> **Best operating point:** thr = 0.84 — precision 97.88%, balanced accuracy 80.04%, FP drops from 889 to 102.
 
-The experiments indicate that severe resizing and Gaussian blur reduce model performance, with Gaussian blur having the strongest impact.
+---
 
-##  Additional Analysis
+### Celeb-DF v2 (zero-shot cross-dataset)
+
+| Metric | FF++ | Celeb-DF v2 | Change |
+|---|---:|---:|---:|
+| Accuracy | 87.75% | 70.27% | ↓ 17.48 pp |
+| Precision | 88.53% | 77.68% | ↓ 10.85 pp |
+| Recall | 98.00% | 76.76% | ↓ 21.24 pp |
+| F1-score | 93.02% | 77.22% | ↓ 15.80 pp |
+| **ROC-AUC** | **90.07%** | **74.44%** | **↓ 15.63 pp** |
+| Balanced Accuracy | 67.25% | 67.31% | ≈ 0 |
+
+> **Root cause:** Domain shift — FF++ uses raw H.264 video; Celeb-DF uses YouTube-compressed clips with different facial styles and GAN generators.
+
+---
+
+### Advanced Metrics (FF++ vs Celeb-DF v2)
+
+| Metric | FF++ | Celeb-DF v2 |
+|---|---:|---:|
+| Equal Error Rate (EER) | 2.79% | 31.18% |
+| pAUC @ FPR ≤ 0.1 | 0.9661 | 0.1801 |
+| pAUC @ FPR ≤ 0.2 | — | — |
+| Temperature (calibration) | — | T = 2.06 (overconfident) |
+
+---
+
+### Robustness Under Image Degradation
+
+| Degradation | Setting | F1 (%) | ROC-AUC (%) |
+|---|---|---:|---:|
+| None (clean) | — | 93.02 | 90.07 |
+| JPEG compression | quality = 90 | 92.66 | 89.65 |
+| JPEG compression | quality = 70 | 92.84 | 88.40 |
+| JPEG compression | quality = 50 | 92.48 | 86.91 |
+| JPEG compression | quality = 30 | 91.68 | 83.39 |
+| Resizing | scale = 0.75 | 92.28 | 86.75 |
+| Resizing | scale = 0.50 | 91.23 | 79.52 |
+| Resizing | scale = 0.25 | 88.51 | 66.57 |
+| Gaussian blur | σ = 1 | 91.60 | 83.78 |
+| Gaussian blur | σ = 2 | 90.78 | 71.03 |
+| Gaussian blur | σ = 3 | 88.07 | 59.84 |
+| Gaussian blur | σ = 4 | 83.87 | **51.50** |
+
+> Gaussian blur (σ = 4) is the most damaging — AUC collapses from 90.07% to 51.50% (↓ 38.57 pp). This confirms the model relies on high-frequency compression artefacts that blur destroys.
+
+---
+
+## Forensic Analysis
 
 ### Error Level Analysis (ELA)
-Used to visualise image compression differences and explore possible manipulation-related patterns.
 
-### Principal Component Analysis (PCA)
-Used to project EfficientNet feature embeddings into two dimensions to explore feature distribution and class overlap.
+ELA reveals inconsistent JPEG re-compression across an image. Manipulated (spliced) regions carry a different compression history and appear brighter in ELA maps. The **ELA mean maps** averaged over each class show that fake faces exhibit systematically elevated residuals at forehead, jaw-line, and blending boundaries — validating that the model responds to real forensic artefacts.
 
-These analyses are exploratory and are not used as independent proof of deepfake manipulation.
+### PCA of EfficientNet-B0 Features
 
-##  Technologies Used
+The 1280-dimensional penultimate-layer embeddings are projected to 2D with PCA. Visible cluster separation between real and fake faces confirms the backbone learnt a discriminative representation. Cluster overlap identifies the hard examples that cause false positives/negatives.
 
-- Python
-- PyTorch
-- EfficientNet-B0
-- OpenCV
-- MTCNN
-- NumPy
-- Pandas
-- Matplotlib
-- Scikit-learn
+---
 
-##  Project Structure
+## Project Structure
 
-```text
+```
 DeepFake-XGuard/
-│
+├── Src/
+│   ├── create_manifests.py       # Dataset manifest generation
+│   ├── extract_frames.py         # Frame sampling from videos
+│   ├── extract_faces.py          # MTCNN face cropping (FF++)
+│   ├── extracted_celebdf_frames.py
+│   ├── extracted_celebdf_faces.py
+│   ├── train.py                  # Baseline training
+│   ├── train_weighted.py         # Class-weighted training (AdamW + CE)
+│   ├── train_evaluate.py         # Training with evaluation loop
+│   ├── train_robust.py           # Degradation-aware training
+│   ├── evaluate.py               # In-domain evaluation (FF++)
+│   ├── evaluate_celebdf.py       # Cross-dataset evaluation (Celeb-DF)
+│   ├── robustness_test.py        # Robustness sweep
+│   ├── robustness_test_robust.py
+│   ├── Validate_robust_clean.py
+│   ├── roc_analysis.py           # ROC / EER curves
+│   ├── ffpp_roc_analysis.py
+│   ├── plot_robustness.py        # Robustness visualisation
+│   └── ela_analysis.py           # ELA and PCA visualisations
 ├── Data/
 │   └── manifests/
-│
-├── src/
-│   ├── create_manifests.py
-│   ├── extract_frames.py
-│   ├── extract_faces.py
-│   ├── train.py
-│   ├── train_weighted.py
-│   ├── train_evaluate.py
-│   ├── evaluate.py
-│   ├── evaluate_celebdf.py
-│   ├── robustness_test.py
-│   └── ela_analysis.py
-│
-├── figures/
-│   ├── pca_efficientnet_features.png
-│   ├── ela_distribution.png
-│   └── other analysis figures
-│
-├── results/
-│   ├── robustness_results.csv
-│   └── celebdf/
-│
+├── figures/                      # All result figures (PNG/JPG)
+├── tables/                       # LaTeX result tables
+├── results/                      # CSV / TXT metrics output
+├── main.tex                      # Beamer presentation (Overleaf-ready)
+├── results_data.tex              # LaTeX macros for all metrics
 ├── README.md
-├── requirements.txt
 └── .gitignore
 ```
 
-*The structure above is representative. Keep the actual filenames and folders present in your repository.*
+---
 
-## 🚀 Getting Started
+## Getting Started
 
-### 1. Clone the repository
+### 1. Clone
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/DeepFake-XGuard.git
+git clone https://github.com/jaini-1801/DeepFake-XGuard.git
 cd DeepFake-XGuard
 ```
 
-### 2. Create a virtual environment
+### 2. Environment
 
 ```bash
 python -m venv venv
-```
-
-Activate it on Windows:
-
-```bash
-venv\Scripts\activate
-```
-
-### 3. Install dependencies
-
-```bash
+venv\Scripts\activate      # Windows
 pip install -r requirements.txt
 ```
 
-### 4. Prepare the datasets
+### 3. Prepare datasets
 
-Download FaceForensics++ and Celeb-DF v2 separately, following their access requirements.
+Download FaceForensics++ and Celeb-DF v2 following their respective access requirements. Update the `ROOT` and `DATA_DIR` paths in each script.
 
-Organise the datasets and update the paths in the relevant Python scripts before running the pipeline.
-
-### 5. Run the pipeline
-
-Run the relevant scripts in the following order, adjusting arguments and paths according to their implementation:
+### 4. Run pipeline
 
 ```bash
-python src/create_manifests.py
-python src/extract_frames.py
-python src/extract_faces.py
-python src/train_weighted.py
-python src/train_evaluate.py
-python src/evaluate_celebdf.py
-python src/robustness_test.py
-python src/ela_analysis.py
+python Src/create_manifests.py
+python Src/extract_frames.py
+python Src/extract_faces.py
+python Src/train_weighted.py
+python Src/train_evaluate.py
+python Src/evaluate_celebdf.py
+python Src/robustness_test.py
+python Src/ela_analysis.py
 ```
 
-**Important:** The commands above are a suggested pipeline order. Check each script for its required arguments, paths and checkpoint settings before running.
+---
 
-##  Limitations
+## Technologies
 
-- Performance decreases when evaluated on a different dataset.
-- Severe blur and resizing affect detection performance.
-- ELA patterns are influenced by compression and image processing.
-- PCA visualisations provide only a two-dimensional view of high-dimensional features.
-- Further evaluation on diverse datasets and real-world videos is required.
+Python · PyTorch · EfficientNet-B0 · MTCNN · OpenCV · NumPy · Pandas · Matplotlib · Scikit-learn
 
-##  Future Work
+---
 
-- Improve cross-dataset generalisation.
-- Evaluate on additional deepfake datasets.
-- Explore temporal information from video sequences.
-- Investigate more robust feature representations.
-- Improve performance under real-world image degradation.
+## Limitations
 
-##  Disclaimer
+- Performance degrades on unseen datasets (domain shift).
+- Severe Gaussian blur collapses AUC to near-chance.
+- ELA is sensitive to any post-processing, not only deepfakes.
+- PCA provides only a 2D view of a 1280-dimensional space.
+- Not evaluated on DFDC or diffusion-based fakes.
 
-This project is developed for academic and research purposes. Its predictions should not be treated as definitive proof that an image or video is authentic or manipulated.
+---
+
+## Future Work
+
+- Domain adaptation and adversarial training.
+- Temporal modelling (RNN / Transformer) over video frames.
+- Degradation-robust augmentation pipeline.
+- GradCAM saliency maps.
+- Evaluation on DFDC, WildDeepfake, and diffusion-generated fakes.
+
+---
+
+## Disclaimer
+
+This project is for academic and research purposes. Its predictions should not be treated as definitive proof that a video or image is authentic or manipulated.
