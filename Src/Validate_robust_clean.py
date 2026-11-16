@@ -44,7 +44,7 @@ from sklearn.metrics import (
 # 1. PATHS AND CONFIGURATION
 # --------------------------------------------------
 
-ROOT = Path(r"E:\DeepFakeX")
+ROOT = Path(__file__).resolve().parents[1]
 
 VAL_DATA  = ROOT / "Data" / "faces" / "val"   # Validation face images
 TEST_DATA = ROOT / "Data" / "faces" / "test"  # Test face images
