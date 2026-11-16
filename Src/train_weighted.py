@@ -340,15 +340,21 @@ for epoch in range(EPOCHS):
     print(f"Val F1: {f1:.4f}")
     print(f"Val ROC-AUC: {auc:.4f}")
 
-    # Save model whenever AUC improves
+    # Keep the checkpoint from the epoch with the best validation ROC-AUC.
+    # The test set is not used for checkpoint selection.
     if auc > best_auc:
         best_auc = auc
-
-    torch.save(
-        model.state_dict(),
-        ROOT / "best_efficientnet_b0_weighted.pth"
-    )
-    print("Best weighted model saved!")
+        checkpoint_path = ROOT / "best_efficientnet_b0_weighted.pth"
+        torch.save(model.state_dict(), checkpoint_path)
+        print(
+            f"Saved best weighted checkpoint: {checkpoint_path} "
+            f"(validation ROC-AUC={best_auc:.4f})"
+        )
+    else:
+        print(
+            f"No checkpoint update; best validation ROC-AUC remains "
+            f"{best_auc:.4f}"
+        )
 
 
 # =========================
