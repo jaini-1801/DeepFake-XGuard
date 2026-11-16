@@ -313,7 +313,7 @@ def evaluate(model, loader):
 # Save model whenever ROC-AUC improves
 # =========================
 
-best_auc = 0.0  # Track best AUC seen so far
+best_auc = float("-inf")  # Track best validation AUC seen so far
 
 for epoch in range(EPOCHS):
 
@@ -372,11 +372,15 @@ for epoch in range(EPOCHS):
 # FINAL TEST EVALUATION
 # =========================
 
+checkpoint_path = ROOT / "best_efficientnet_b0_weighted.pth"
+if not checkpoint_path.exists():
+    raise FileNotFoundError("No weighted checkpoint was saved. Check the training/validation data.")
+
 print("\nLoading best model...")
 
 model.load_state_dict(
     torch.load(
-        ROOT / "best_efficientnet_b0_weighted.pth",
+        checkpoint_path,
         map_location=DEVICE,
         weights_only=True
     )
@@ -391,4 +395,4 @@ print(f"Precision: {precision:.4f}")
 print(f"Recall   : {recall:.4f}")
 print(f"F1 Score : {f1:.4f}")
 print(f"ROC-AUC  : {auc:.4f}")
-print(f"Val Balanced Accuracy: {balanced_acc:.4f}")
+print(f"Balanced Accuracy: {balanced_acc:.4f}")
