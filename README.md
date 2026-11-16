@@ -39,11 +39,11 @@ Please follow each dataset's licence and access requirements.
 ### Data Pipeline
 
 ```
-FF++ Videos ──► Frame Extraction (1 fps) ──► MTCNN Face Detection ──► Crop & Resize 160×160
+FF++ Videos ──► Frame Extraction (1 fps) ──► MTCNN Face Detection ──► Face crop 224×224
                                                                              │
-Celeb-DF v2 ──► Frame Extraction (1 fps) ──► MTCNN Face Detection ──► Crop & Resize 160×160
+Celeb-DF v2 ──► Frame Extraction (1 fps) ──► MTCNN Face Detection ──► Face crop 224×224
                                                                              │
-                                                                    Augment + Normalise
+                                                                    Resize to 160×160 + Augment + Normalise
                                                                              │
                                                                    EfficientNet-B0 Fine-tuning
                                                                      /        |         \
@@ -164,38 +164,33 @@ The 1280-dimensional penultimate-layer embeddings are projected to 2D with PCA. 
 
 ## Project Structure
 
-```
+```text
 DeepFake-XGuard/
-├── Src/
-│   ├── create_manifests.py       # Dataset manifest generation
-│   ├── extract_frames.py         # Frame sampling from videos
-│   ├── extract_faces.py          # MTCNN face cropping (FF++)
-│   ├── extracted_celebdf_frames.py
-│   ├── extracted_celebdf_faces.py
-│   ├── train.py                  # Baseline training
-│   ├── train_weighted.py         # Class-weighted training (AdamW + CE)
-│   ├── train_evaluate.py         # Training with evaluation loop
-│   ├── train_robust.py           # Degradation-aware training
-│   ├── evaluate.py               # In-domain evaluation (FF++)
-│   ├── evaluate_celebdf.py       # Cross-dataset evaluation (Celeb-DF)
-│   ├── robustness_test.py        # Robustness sweep
-│   ├── robustness_test_robust.py
-│   ├── Validate_robust_clean.py
-│   ├── roc_analysis.py           # ROC / EER curves
-│   ├── ffpp_roc_analysis.py
-│   ├── plot_robustness.py        # Robustness visualisation
-│   └── ela_analysis.py           # ELA and PCA visualisations
 ├── Data/
-│   └── manifests/
-├── figures/                      # All result figures (PNG/JPG)
-├── tables/                       # LaTeX result tables
-├── results/                      # CSV / TXT metrics output
-├── main.tex                      # Beamer presentation (Overleaf-ready)
-├── results_data.tex              # LaTeX macros for all metrics
+│   ├── splits/                  # Official FF++ train/val/test video-ID splits
+│   └── manifests/               # FF++ and Celeb-DF CSV manifests
+├── Src/
+│   ├── create_manifests.py      # Build video manifests
+│   ├── extract_frames.py        # Sample frames from videos
+│   ├── extract_faces.py         # Detect and crop faces with MTCNN
+│   ├── train.py                 # Baseline EfficientNet-B0 training
+│   ├── train_weighted.py       # Class-weighted training
+│   ├── train_robust.py         # Degradation-aware training
+│   ├── evaluate.py             # Baseline FF++ evaluation
+│   ├── evaluate_celebdf.py     # Cross-dataset evaluation
+│   ├── robustness_test.py      # Baseline degradation sweep
+│   ├── robustness_test_robust.py # Degradation-aware model sweep
+│   └── ela_analysis.py         # ELA and PCA analysis
+├── old_experiment/
+│   ├── figures/                 # Saved plots from earlier experiments
+│   └── results/                 # Archived metrics and prediction outputs
+├── results/                     # Runtime logs and generated outputs
+├── requirements.txt
 ├── README.md
 └── .gitignore
 ```
 
+Large raw datasets, extracted frames/faces, and model checkpoints are stored locally and excluded from version control. The exact dataset folder layout is described in the Getting Started section.
 ---
 
 ## Getting Started
