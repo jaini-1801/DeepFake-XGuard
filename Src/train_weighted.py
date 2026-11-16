@@ -40,8 +40,8 @@ from pathlib import Path
 # CONFIG
 # =========================
 
-ROOT = Path(r"E:\DeepFakeX")
-DATA_DIR = Path(r"E:\DeepFakeX\data\faces")
+ROOT = Path(__file__).resolve().parents[1]
+DATA_DIR = ROOT / "data" / "faces"
 
 BATCH_SIZE = 8
 EPOCHS = 10
@@ -134,6 +134,12 @@ train_counts = Counter(
     label for _, label in train_dataset.samples
 )
 print("Training distribution:", train_counts)
+
+if not train_counts or set(train_counts) != {0, 1}:
+    raise RuntimeError(
+        "Training data must contain both classes: original (real) and at least one fake folder. "
+        f"Found counts: {dict(train_counts)}. Check {DATA_DIR / 'train'}"
+    )
 
 total = sum(train_counts.values())
 
@@ -282,6 +288,11 @@ def evaluate(model, loader):
         all_labels, all_preds, zero_division=0
     )
 
+    if len(set(all_labels)) < 2:
+        raise ValueError(
+            "ROC-AUC cannot be calculated because this split contains only one class. "
+            f"Found labels: {sorted(set(all_labels))}"
+        )
     auc = roc_auc_score(all_labels, all_probs)
 
     # Balanced accuracy: average recall per class (better for imbalanced datasets)
@@ -366,7 +377,8 @@ print("\nLoading best model...")
 model.load_state_dict(
     torch.load(
         ROOT / "best_efficientnet_b0_weighted.pth",
-        map_location=DEVICE
+        map_location=DEVICE,
+        weights_only=True
     )
 )
 
