@@ -30,7 +30,7 @@ from sklearn.metrics import (
     average_precision_score
 )
 
-ROOT = Path(r"E:\DeepFakeX")
+ROOT = Path(__file__).resolve().parents[1]
 
 # Load saved predictions (created by train_evaluate.py)
 # .npz is a compressed numpy archive: contains 'labels' and 'probabilities' arrays
