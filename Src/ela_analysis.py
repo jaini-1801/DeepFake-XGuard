@@ -33,7 +33,7 @@ from PIL import Image
 from scipy import stats
 
 # ---- Config ----
-ROOT = Path(r"E:\DeepFakeX")
+ROOT = Path(__file__).resolve().parents[1]
 OUT  = ROOT / "figures"
 OUT.mkdir(parents=True, exist_ok=True)
 
