@@ -23,7 +23,7 @@ from pathlib import Path
 from tqdm import tqdm                 # Progress bar
 
 # ---- Config ----
-ROOT        = Path(r"E:\DeepFakeX")
+ROOT = Path(__file__).resolve().parents[1]
 FRAMES_DIR  = ROOT / "Data" / "frames"   # Input: raw video frames
 FACES_DIR   = ROOT / "Data" / "faces"    # Output: cropped face images
 RESULTS_DIR = ROOT / "results"
