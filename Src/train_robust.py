@@ -34,7 +34,7 @@ from sklearn.metrics import (
 )
 
 # ---- Config ----
-ROOT        = Path(r"E:\DeepFakeX")
+ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR    = ROOT / "Data" / "faces"
 RESULTS_DIR = ROOT / "results"
 CHECKPOINT  = ROOT / "best_efficientnet_b0_robust.pth"  # Where to save best model
