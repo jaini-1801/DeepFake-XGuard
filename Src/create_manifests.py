@@ -24,7 +24,7 @@ from pathlib import Path
 
 # ---- Paths ----
 ROOT   = Path(r"E:\DeepFakeX")
-DATA   = ROOT / "data"
+DATA   = ROOT / "Data"
 SPLITS = DATA / "splits"    # Contains train.json, val.json, test.json from FF++
 OUTPUT = DATA / "manifests" # Where the CSV files will be saved
 
