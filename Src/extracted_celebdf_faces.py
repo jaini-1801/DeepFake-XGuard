@@ -24,7 +24,7 @@ from PIL import Image
 from pathlib import Path
 from tqdm import tqdm               # Progress bar
 
-ROOT = Path(r"E:\DeepFakeX")
+ROOT = Path(__file__).resolve().parents[1]
 
 FRAMES_DIR = ROOT / "Data" / "frames" / "celebdf_test"  # Input: raw frames
 FACES_DIR  = ROOT / "Data" / "faces"  / "celebdf_test"  # Output: face crops

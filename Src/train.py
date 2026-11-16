@@ -37,8 +37,8 @@ from pathlib import Path
 # All important settings in one place -- change these to fit your setup
 # =========================
 
-ROOT = Path(r"E:\DeepFakeX")            # Root folder of the whole project
-DATA_DIR = Path(r"E:\DeepFakeX\data\faces")  # Where face images are stored
+ROOT = Path(__file__).resolve().parents[1]            # Root folder of the whole project
+DATA_DIR = ROOT / "Data" / "faces"  # Where face images are stored
 
 BATCH_SIZE = 8      # How many images to process at once (lower = less RAM)
 EPOCHS = 10         # How many full passes through the training data

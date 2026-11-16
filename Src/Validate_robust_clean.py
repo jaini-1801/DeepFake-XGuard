@@ -44,10 +44,10 @@ from sklearn.metrics import (
 # 1. PATHS AND CONFIGURATION
 # --------------------------------------------------
 
-ROOT = Path(r"E:\DeepFakeX")
+ROOT = Path(__file__).resolve().parents[1]
 
-VAL_DATA  = ROOT / "data" / "faces" / "val"   # Validation face images
-TEST_DATA = ROOT / "data" / "faces" / "test"  # Test face images
+VAL_DATA  = ROOT / "Data" / "faces" / "val"   # Validation face images
+TEST_DATA = ROOT / "Data" / "faces" / "test"  # Test face images
 
 # Which model to evaluate (baseline model here)
 CKPT = ROOT / "best_efficientnet_b0.pth"

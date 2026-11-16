@@ -40,8 +40,8 @@ from pathlib import Path
 # CONFIG
 # =========================
 
-ROOT = Path(r"E:\DeepFakeX")
-DATA_DIR = Path(r"E:\DeepFakeX\data\faces")
+ROOT = Path(__file__).resolve().parents[1]
+DATA_DIR = ROOT / "Data" / "faces"
 
 BATCH_SIZE = 8
 EPOCHS = 10
@@ -134,6 +134,12 @@ train_counts = Counter(
     label for _, label in train_dataset.samples
 )
 print("Training distribution:", train_counts)
+
+if not train_counts or set(train_counts) != {0, 1}:
+    raise RuntimeError(
+        "Training data must contain both classes: original (real) and at least one fake folder. "
+        f"Found counts: {dict(train_counts)}. Check {DATA_DIR / 'train'}"
+    )
 
 total = sum(train_counts.values())
 
@@ -282,6 +288,11 @@ def evaluate(model, loader):
         all_labels, all_preds, zero_division=0
     )
 
+    if len(set(all_labels)) < 2:
+        raise ValueError(
+            "ROC-AUC cannot be calculated because this split contains only one class. "
+            f"Found labels: {sorted(set(all_labels))}"
+        )
     auc = roc_auc_score(all_labels, all_probs)
 
     # Balanced accuracy: average recall per class (better for imbalanced datasets)
@@ -302,7 +313,7 @@ def evaluate(model, loader):
 # Save model whenever ROC-AUC improves
 # =========================
 
-best_auc = 0.0  # Track best AUC seen so far
+best_auc = float("-inf")  # Track best validation AUC seen so far
 
 for epoch in range(EPOCHS):
 
@@ -340,27 +351,38 @@ for epoch in range(EPOCHS):
     print(f"Val F1: {f1:.4f}")
     print(f"Val ROC-AUC: {auc:.4f}")
 
-    # Save model whenever AUC improves
+    # Keep the checkpoint from the epoch with the best validation ROC-AUC.
+    # The test set is not used for checkpoint selection.
     if auc > best_auc:
         best_auc = auc
-
-    torch.save(
-        model.state_dict(),
-        ROOT / "best_efficientnet_b0_weighted.pth"
-    )
-    print("Best weighted model saved!")
+        checkpoint_path = ROOT / "best_efficientnet_b0_weighted.pth"
+        torch.save(model.state_dict(), checkpoint_path)
+        print(
+            f"Saved best weighted checkpoint: {checkpoint_path} "
+            f"(validation ROC-AUC={best_auc:.4f})"
+        )
+    else:
+        print(
+            f"No checkpoint update; best validation ROC-AUC remains "
+            f"{best_auc:.4f}"
+        )
 
 
 # =========================
 # FINAL TEST EVALUATION
 # =========================
 
+checkpoint_path = ROOT / "best_efficientnet_b0_weighted.pth"
+if not checkpoint_path.exists():
+    raise FileNotFoundError("No weighted checkpoint was saved. Check the training/validation data.")
+
 print("\nLoading best model...")
 
 model.load_state_dict(
     torch.load(
-        ROOT / "best_efficientnet_b0_weighted.pth",
-        map_location=DEVICE
+        checkpoint_path,
+        map_location=DEVICE,
+        weights_only=True
     )
 )
 
@@ -373,4 +395,4 @@ print(f"Precision: {precision:.4f}")
 print(f"Recall   : {recall:.4f}")
 print(f"F1 Score : {f1:.4f}")
 print(f"ROC-AUC  : {auc:.4f}")
-print(f"Val Balanced Accuracy: {balanced_acc:.4f}")
+print(f"Balanced Accuracy: {balanced_acc:.4f}")

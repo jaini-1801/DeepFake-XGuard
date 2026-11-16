@@ -37,8 +37,8 @@ import io
 import csv
 
 # ---- Config ----
-ROOT       = Path(r"E:\DeepFakeX")
-DATA_DIR   = ROOT / "data" / "faces" / "test"   # Test face images
+ROOT = Path(__file__).resolve().parents[1]
+DATA_DIR   = ROOT / "Data" / "faces" / "test"   # Test face images
 CHECKPOINT = ROOT / "best_efficientnet_b0.pth"  # Baseline model (no weighting/robust training)
 RESULTS    = ROOT / "results"
 RESULTS.mkdir(parents=True, exist_ok=True)
@@ -134,6 +134,19 @@ class TestImages(torch.utils.data.Dataset):
 
 # ---- Load test dataset ----
 dataset = TestImages(DATA_DIR)
+label_counts = {
+    "real": sum(label == 0 for _, label in dataset.samples),
+    "fake": sum(label == 1 for _, label in dataset.samples),
+}
+print("Test images:", len(dataset.samples))
+print("Real images:", label_counts["real"])
+print("Fake images:", label_counts["fake"])
+
+if label_counts["real"] == 0 or label_counts["fake"] == 0:
+    raise RuntimeError(
+        "Robustness evaluation requires both real and fake test images. "
+        f"Observed counts: {label_counts}. Check DATA_DIR: {DATA_DIR}"
+    )
 
 # ---- Load model ----
 model = models.efficientnet_b0(weights=None)

@@ -26,8 +26,8 @@ from sklearn.metrics import (
 import matplotlib.pyplot as plt
 
 # ---- Paths ----
-ROOT = Path(r"E:\DeepFakeX")
-DATA_DIR = ROOT / "data" / "faces"          # Folder containing extracted face images
+ROOT = Path(__file__).resolve().parents[1]
+DATA_DIR = ROOT / "Data" / "faces"          # Folder containing extracted face images
 CHECKPOINT = ROOT / "best_efficientnet_b0.pth"  # Saved model weights
 RESULTS = ROOT / "results"
 RESULTS.mkdir(parents=True, exist_ok=True)  # Create results folder if it doesn't exist

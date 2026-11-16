@@ -29,7 +29,7 @@ import numpy as np     # For evenly spacing frame indices
 from pathlib import Path
 from tqdm import tqdm  # Progress bar in the terminal
 
-ROOT = Path(r"E:\DeepFakeX")
+ROOT = Path(__file__).resolve().parents[1]
 
 # CSV file provided by the Celeb-DF authors listing all test videos
 MANIFEST   = ROOT / "Data" / "manifests" / "celebdf_official_test.csv"

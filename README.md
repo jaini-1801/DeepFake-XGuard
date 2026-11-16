@@ -39,11 +39,11 @@ Please follow each dataset's licence and access requirements.
 ### Data Pipeline
 
 ```
-FF++ Videos ──► Frame Extraction (1 fps) ──► MTCNN Face Detection ──► Crop & Resize 160×160
+FF++ Videos ──► Frame Extraction (1 fps) ──► MTCNN Face Detection ──► Face crop 224×224
                                                                              │
-Celeb-DF v2 ──► Frame Extraction (1 fps) ──► MTCNN Face Detection ──► Crop & Resize 160×160
+Celeb-DF v2 ──► Frame Extraction (1 fps) ──► MTCNN Face Detection ──► Face crop 224×224
                                                                              │
-                                                                    Augment + Normalise
+                                                                    Resize to 160×160 + Augment + Normalise
                                                                              │
                                                                    EfficientNet-B0 Fine-tuning
                                                                      /        |         \
@@ -129,6 +129,8 @@ Confusion matrix at thr = 0.50 (n = 8,400):
 
 ### Robustness Under Image Degradation
 
+The table below reports the **baseline checkpoint** (`best_efficientnet_b0.pth`) evaluated by `Src/robustness_test.py`. It is not the result of degradation-aware training; that model is a separate experiment evaluated by `Src/robustness_test_robust.py`.
+
 | Degradation | Setting | F1 (%) | ROC-AUC (%) |
 |---|---|---:|---:|
 | None (clean) | — | 93.02 | 90.07 |
@@ -162,38 +164,33 @@ The 1280-dimensional penultimate-layer embeddings are projected to 2D with PCA. 
 
 ## Project Structure
 
-```
+```text
 DeepFake-XGuard/
-├── Src/
-│   ├── create_manifests.py       # Dataset manifest generation
-│   ├── extract_frames.py         # Frame sampling from videos
-│   ├── extract_faces.py          # MTCNN face cropping (FF++)
-│   ├── extracted_celebdf_frames.py
-│   ├── extracted_celebdf_faces.py
-│   ├── train.py                  # Baseline training
-│   ├── train_weighted.py         # Class-weighted training (AdamW + CE)
-│   ├── train_evaluate.py         # Training with evaluation loop
-│   ├── train_robust.py           # Degradation-aware training
-│   ├── evaluate.py               # In-domain evaluation (FF++)
-│   ├── evaluate_celebdf.py       # Cross-dataset evaluation (Celeb-DF)
-│   ├── robustness_test.py        # Robustness sweep
-│   ├── robustness_test_robust.py
-│   ├── Validate_robust_clean.py
-│   ├── roc_analysis.py           # ROC / EER curves
-│   ├── ffpp_roc_analysis.py
-│   ├── plot_robustness.py        # Robustness visualisation
-│   └── ela_analysis.py           # ELA and PCA visualisations
 ├── Data/
-│   └── manifests/
-├── figures/                      # All result figures (PNG/JPG)
-├── tables/                       # LaTeX result tables
-├── results/                      # CSV / TXT metrics output
-├── main.tex                      # Beamer presentation (Overleaf-ready)
-├── results_data.tex              # LaTeX macros for all metrics
+│   ├── splits/                  # Official FF++ train/val/test video-ID splits
+│   └── manifests/               # FF++ and Celeb-DF CSV manifests
+├── Src/
+│   ├── create_manifests.py      # Build video manifests
+│   ├── extract_frames.py        # Sample frames from videos
+│   ├── extract_faces.py         # Detect and crop faces with MTCNN
+│   ├── train.py                 # Baseline EfficientNet-B0 training
+│   ├── train_weighted.py       # Class-weighted training
+│   ├── train_robust.py         # Degradation-aware training
+│   ├── evaluate.py             # Baseline FF++ evaluation
+│   ├── evaluate_celebdf.py     # Cross-dataset evaluation
+│   ├── robustness_test.py      # Baseline degradation sweep
+│   ├── robustness_test_robust.py # Degradation-aware model sweep
+│   └── ela_analysis.py         # ELA and PCA analysis
+├── old_experiment/
+│   ├── figures/                 # Saved plots from earlier experiments
+│   └── results/                 # Archived metrics and prediction outputs
+├── results/                     # Runtime logs and generated outputs
+├── requirements.txt
 ├── README.md
 └── .gitignore
 ```
 
+Large raw datasets, extracted frames/faces, and model checkpoints are stored locally and excluded from version control. The exact dataset folder layout is described in the Getting Started section.
 ---
 
 ## Getting Started
@@ -207,29 +204,62 @@ cd DeepFake-XGuard
 
 ### 2. Environment
 
+Use Python 3.10 or 3.11. Create and activate a virtual environment:
+
 ```bash
-python -m venv venv
-venv\Scripts\activate      # Windows
+python -m venv .venv
+# Windows
+.venv\\Scripts\\activate
+# macOS / Linux
+source .venv/bin/activate
+
+# Install PyTorch/torchvision for your CPU or CUDA setup first:
+# https://pytorch.org/get-started/locally/
 pip install -r requirements.txt
 ```
 
 ### 3. Prepare datasets
 
-Download FaceForensics++ and Celeb-DF v2 following their respective access requirements. Update the `ROOT` and `DATA_DIR` paths in each script.
+Download FaceForensics++ and Celeb-DF v2 following their access requirements. Place the FaceForensics++ split JSON files and source videos under the `Data/` directory, following the folder layout expected by `Src/create_manifests.py`. Project paths are resolved relative to the repository, so you do not need to edit a drive-specific path.
 
-### 4. Run pipeline
+Extracted frames and face crops are generated under `Data/frames/` and `Data/faces/`. These large datasets and trained checkpoints are not committed to Git.
+
+### 4. Run the pipeline
+
+Run preprocessing once:
 
 ```bash
 python Src/create_manifests.py
 python Src/extract_frames.py
 python Src/extract_faces.py
+```
+
+Then choose the experiment you want to reproduce. These are separate model experiments with separate checkpoints; do not mix their results.
+
+**Baseline model (used for the baseline FF++ metrics and baseline robustness table):**
+
+```bash
+python Src/train.py
+python Src/evaluate.py
+python Src/robustness_test.py
+```
+
+**Class-weighted model (used by the current Celeb-DF evaluation script):**
+
+```bash
 python Src/train_weighted.py
 python Src/train_evaluate.py
 python Src/evaluate_celebdf.py
-python Src/robustness_test.py
-python Src/ela_analysis.py
 ```
 
+**Degradation-aware model (separate robustness experiment):**
+
+```bash
+python Src/train_robust.py
+python Src/robustness_test_robust.py
+```
+
+Run `python Src/ela_analysis.py` separately for the ELA/PCA visualisations. Training and face extraction can take a long time and require substantial disk space; make sure the datasets and checkpoints are available before starting each experiment.
 ---
 
 ## Technologies
@@ -237,6 +267,13 @@ python Src/ela_analysis.py
 Python · PyTorch · EfficientNet-B0 · MTCNN · OpenCV · NumPy · Pandas · Matplotlib · Scikit-learn
 
 ---
+
+## Reproducibility notes
+
+- The baseline, class-weighted, and degradation-aware models use different checkpoints. Always record which checkpoint produced a metric.
+- The robustness scripts check that both real and fake samples are present before calculating ROC-AUC. A one-class test set makes ROC-AUC undefined and should stop the evaluation rather than produce a misleading result.
+- Re-run the degradation-aware robustness evaluation before reporting its metrics. Older `robust_model_robustness.csv` output containing F1 = 0 and blank AUC values is invalid and is not evidence of model performance.
+- Saved CSV/metric files are experiment outputs, not a substitute for rerunning the scripts on the documented dataset split.
 
 ## Limitations
 
