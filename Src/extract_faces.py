@@ -24,8 +24,8 @@ from tqdm import tqdm                 # Progress bar
 
 # ---- Config ----
 ROOT        = Path(r"E:\DeepFakeX")
-FRAMES_DIR  = ROOT / "data" / "frames"   # Input: raw video frames
-FACES_DIR   = ROOT / "data" / "faces"    # Output: cropped face images
+FRAMES_DIR  = ROOT / "Data" / "frames"   # Input: raw video frames
+FACES_DIR   = ROOT / "Data" / "faces"    # Output: cropped face images
 RESULTS_DIR = ROOT / "results"
 
 RESULTS_DIR.mkdir(parents=True, exist_ok=True)
