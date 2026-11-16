@@ -38,7 +38,7 @@ from sklearn.metrics import (
 )
 
 # ---- Config ----
-ROOT = Path(r"E:\DeepFakeX")
+ROOT = Path(__file__).resolve().parents[1]
 
 # Input: video-level predictions from evaluate_celebdf.py
 CSV_PATH = ROOT / "results/celebdf/celebdf_video_predictions.csv"
