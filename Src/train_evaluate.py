@@ -35,7 +35,7 @@ from sklearn.metrics import (
 
 # ---- CONFIG ----
 ROOT       = Path(r"E:\DeepFakeX")
-DATA_DIR   = ROOT / "data" / "faces"
+DATA_DIR   = ROOT / "Data" / "faces"
 CHECKPOINT = ROOT / "best_efficientnet_b0_weighted.pth"  # Weighted model
 
 BATCH_SIZE = 8
