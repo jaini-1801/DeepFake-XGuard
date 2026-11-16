@@ -37,7 +37,7 @@ import io
 import csv
 
 # ---- Config ----
-ROOT       = Path(r"E:\DeepFakeX")
+ROOT = Path(__file__).resolve().parents[1]
 DATA_DIR   = ROOT / "Data" / "faces" / "test"   # Test face images
 CHECKPOINT = ROOT / "best_efficientnet_b0.pth"  # Baseline model (no weighting/robust training)
 RESULTS    = ROOT / "results"
