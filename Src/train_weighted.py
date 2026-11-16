@@ -41,7 +41,7 @@ from pathlib import Path
 # =========================
 
 ROOT = Path(__file__).resolve().parents[1]
-DATA_DIR = ROOT / "data" / "faces"
+DATA_DIR = ROOT / "Data" / "faces"
 
 BATCH_SIZE = 8
 EPOCHS = 10
