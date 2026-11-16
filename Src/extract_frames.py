@@ -25,7 +25,7 @@ from pathlib import Path
 from tqdm import tqdm  # Shows a progress bar in the terminal
 
 # ---- Config ----
-ROOT = Path(r"E:\DeepFakeX")
+ROOT = Path(__file__).resolve().parents[1]
 FRAMES_DIR = ROOT / "Data" / "frames"   # Where extracted frames will be saved
 
 FRAMES_PER_VIDEO = 10   # How many frames to extract per video
