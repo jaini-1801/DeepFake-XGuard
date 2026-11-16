@@ -45,7 +45,7 @@ from sklearn.metrics import (
 # CONFIGURATION
 # ==========================================
 
-ROOT = Path(r"E:\DeepFakeX")
+ROOT = Path(__file__).resolve().parents[1]
 
 # CSV file listing all Celeb-DF test videos with their labels
 MANIFEST   = ROOT / "Data" / "manifests" / "celebdf_official_test.csv"
