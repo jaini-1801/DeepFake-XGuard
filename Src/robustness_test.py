@@ -38,7 +38,7 @@ import csv
 
 # ---- Config ----
 ROOT       = Path(r"E:\DeepFakeX")
-DATA_DIR   = ROOT / "data" / "faces" / "test"   # Test face images
+DATA_DIR   = ROOT / "Data" / "faces" / "test"   # Test face images
 CHECKPOINT = ROOT / "best_efficientnet_b0.pth"  # Baseline model (no weighting/robust training)
 RESULTS    = ROOT / "results"
 RESULTS.mkdir(parents=True, exist_ok=True)
