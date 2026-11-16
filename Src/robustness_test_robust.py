@@ -32,7 +32,7 @@ from torchvision.models import EfficientNet_B0_Weights
 
 # Resolve paths relative to this repository, not a particular Windows drive.
 ROOT = Path(__file__).resolve().parents[1]
-DATA_DIR = ROOT / "data" / "faces" / "test"
+DATA_DIR = ROOT / "Data" / "faces" / "test"
 CHECKPOINT = ROOT / "best_efficientnet_b0_robust.pth"
 OUTPUT = ROOT / "results" / "robust_model_robustness.csv"
 
